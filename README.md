@@ -1,5 +1,7 @@
 # AI Deception Dashboard
 
+## testing from the github web
+
 This project explores how AI systems internally behave when producing truthful, deceptive, or withholding responses.
 
 Rather than judging outputs as “lies,” this dashboard surfaces internal **deception signals** using interpretability techniques, including feature analysis and intervention. The goal is transparency — not verdicts.
