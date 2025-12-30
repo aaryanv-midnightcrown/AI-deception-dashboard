@@ -14,11 +14,46 @@ classifier = DeceptionClassifier()
 
 def simulate_activation(text):
     """
-    Simulate an internal activation vector from text.
-    This stands in for real model activations in v1.
+    Deterministic, biased activation simulation.
+    Encodes deception-relevant language cues into the vector.
     """
     rng = np.random.default_rng(abs(hash(text)) % (2**32))
-    return normalize(rng.normal(size=768))
+
+    # base activation
+    vec = rng.normal(size=768)
+
+    text_lower = text.lower()
+
+    # --- deception cues ---
+    fabrication_cues = [
+        "definitely", "guaranteed", "100%", "everyone knows",
+        "proven", "no doubt"
+    ]
+
+    withholding_cues = [
+        "i can’t", "i cannot", "not allowed", "i won’t",
+        "policy", "cannot help", "unable to provide"
+    ]
+
+    truthful_cues = [
+        "it depends", "uncertain", "not sure", "varies",
+        "approximately", "estimate"
+    ]
+
+    # bias vector based on cues
+    for cue in fabrication_cues:
+        if cue in text_lower:
+            vec[:256] += 2.0   # fabrication region
+
+    for cue in withholding_cues:
+        if cue in text_lower:
+            vec[256:512] += 2.0  # withholding region
+
+    for cue in truthful_cues:
+        if cue in text_lower:
+            vec[512:] += 1.5   # truthful region
+
+    return normalize(vec)
 
 def analyze_response(prompt, response):
     """
