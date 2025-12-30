@@ -1,43 +1,74 @@
 import sys
 import os
 
-# add project root to python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# --------------------------------------------------
+# Ensure project root is on Python path
+# This allows `from core import ...` to work reliably
+# --------------------------------------------------
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
 
 import streamlit as st
 from core.analyze import analyze_response
 
-st.set_page_config(page_title="AI Deception Dashboard", layout="centered")
+# --------------------------------------------------
+# Streamlit page setup
+# --------------------------------------------------
+st.set_page_config(
+    page_title="AI Deception Dashboard",
+    layout="centered"
+)
 
 st.title("AI Deception Dashboard")
 st.write(
-    "This tool explores internal signals associated with different deceptive behaviors in AI responses."
+    "This tool explores internal signals associated with different deceptive "
+    "behaviors in AI responses. It surfaces patterns and confidence — not intent."
 )
 
-prompt = st.text_area("User Prompt")
-response = st.text_area("AI Response")
+# --------------------------------------------------
+# User input
+# --------------------------------------------------
+prompt = st.text_area(
+    "User Prompt",
+    placeholder="Enter the user's question or request here..."
+)
 
+response = st.text_area(
+    "AI Response",
+    placeholder="Paste the AI-generated response here..."
+)
+
+# --------------------------------------------------
+# Analysis trigger
+# --------------------------------------------------
 if st.button("Analyze"):
-    if not prompt or not response:
+    if not prompt.strip() or not response.strip():
         st.warning("Please enter both a prompt and a response.")
     else:
-        result = analyze_response(prompt, response)
+        with st.spinner("Analyzing internal deception signals..."):
+            result = analyze_response(prompt, response)
 
-        st.subheader("Result")
-        st.write(f"**Predicted behavior:** {result['prediction']}")
-        st.write(f"**Confidence:** {result['confidence']}")
+        st.divider()
+        st.subheader("Deception Profile")
 
-        st.subheader("Probabilities")
+        st.write(f"**Predicted behavior:** `{result['prediction']}`")
+        st.write(f"**Confidence:** `{result['confidence']}`")
+
+        st.subheader("Probability Breakdown")
         st.json(result["probabilities"])
 
         st.subheader("Mechanistic Insight")
         st.write(
-            f"Top contributing internal feature: `{result['top_feature_index']}`"
+            f"Top contributing internal feature index: "
+            f"`{result['top_feature_index']}`"
         )
         st.write(
-            f"Estimated impact if removed: `{result['ablation_effect']}`"
+            f"Estimated confidence drop if removed: "
+            f"`{result['ablation_effect']}`"
         )
 
         st.caption(
-            "Note: This is a research demo. Signals indicate patterns, not intent."
+            "This is a research demo. Outputs indicate internal patterns, "
+            "not truthfulness or intent."
         )
