@@ -29,46 +29,75 @@ st.write(
 # --------------------------------------------------
 # User input
 # --------------------------------------------------
+
 prompt = st.text_area(
     "User Prompt",
     placeholder="Enter the user's question or request here..."
 )
 
-response = st.text_area(
-    "AI Response",
-    placeholder="Paste the AI-generated response here..."
+response_a = st.text_area(
+    "AI Response A",
+    placeholder="Paste the first AI response here..."
+)
+
+response_b = st.text_area(
+    "AI Response B (optional)",
+    placeholder="Paste a second response to compare..."
 )
 
 # --------------------------------------------------
 # Analysis trigger
 # --------------------------------------------------
 if st.button("Analyze"):
-    if not prompt.strip() or not response.strip():
-        st.warning("Please enter both a prompt and a response.")
+    if not prompt.strip() or not response_a.strip():
+        st.warning("Please enter a prompt and at least one response.")
     else:
         with st.spinner("Analyzing internal deception signals..."):
-            result = analyze_response(prompt, response)
+            result_a = analyze_response(prompt, response_a)
+
+            result_b = None
+            if response_b.strip():
+                result_b = analyze_response(prompt, response_b)
 
         st.divider()
         st.subheader("Deception Profile")
 
-        st.write(f"**Predicted behavior:** `{result['prediction']}`")
-        st.write(f"**Confidence:** `{result['confidence']}`")
+        col1, col2 = st.columns(2)
 
-        st.subheader("Probability Breakdown")
-        st.json(result["probabilities"])
+        with col1:
+            st.markdown("### Response A")
+            st.write(f"**Behavior:** `{result_a['prediction']}`")
+            st.write(f"**Confidence:** `{result_a['confidence']}`")
+            st.json(result_a["probabilities"])
+            st.caption(
+                f"Top feature: {result_a['top_feature_index']} | "
+                f"Ablation impact: {result_a['ablation_effect']}"
+            )
 
-        st.subheader("Mechanistic Insight")
-        st.write(
-            f"Top contributing internal feature index: "
-            f"`{result['top_feature_index']}`"
-        )
-        st.write(
-            f"Estimated confidence drop if removed: "
-            f"`{result['ablation_effect']}`"
-        )
+        if result_b:
+            with col2:
+                st.markdown("### Response B")
+                st.write(f"**Behavior:** `{result_b['prediction']}`")
+                st.write(f"**Confidence:** `{result_b['confidence']}`")
+                st.json(result_b["probabilities"])
+                st.caption(
+                    f"Top feature: {result_b['top_feature_index']} | "
+                    f"Ablation impact: {result_b['ablation_effect']}"
+                )
+
+            st.divider()
+            st.subheader("Comparison Insight")
+
+            if result_a["prediction"] != result_b["prediction"]:
+                st.write(
+                    f"These responses exhibit **different internal deception patterns**: "
+                    f"`{result_a['prediction']}` vs `{result_b['prediction']}`."
+                )
+            else:
+                st.write(
+                    "Both responses exhibit **similar internal deception patterns**."
+                )
 
         st.caption(
-            "This is a research demo. Outputs indicate internal patterns, "
-            "not truthfulness or intent."
+            "This tool surfaces internal patterns, not intent or truthfulness."
         )
